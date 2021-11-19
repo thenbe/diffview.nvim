@@ -128,7 +128,7 @@ function FileHistoryView:set_file(file, focus)
     vim.cmd("diffoff!")
     file:load_buffers(self.git_root, self.left_winid, self.right_winid)
     self:update_windows()
-    self.panel.cur_item = { entry, file }
+    self.panel:update_active_item({ entry, file })
     self.panel:highlight_item(file)
     self.nulled = false
 

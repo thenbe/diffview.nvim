@@ -14,10 +14,14 @@ local setlocal_opr_templates = {
   prepend = [[exe 'setl ${option}=${value}' . (&${option} == "" ? "" : "," . &${option})]],
 }
 
-function M._echo_multiline(msg, hl, schedule)
+---Echo string with multiple lines.
+---@param msg string
+---@param hl? string Highlight group name.
+---@param schedule? boolean Schedule the echo call.
+function M.echo_multiln(msg, hl, schedule)
   if schedule then
     vim.schedule(function()
-      M._echo_multiline(msg, hl, false)
+      M.echo_multiln(msg, hl, false)
     end)
     return
   end
@@ -32,19 +36,19 @@ end
 ---@param msg string
 ---@param schedule? boolean Schedule the echo call.
 function M.info(msg, schedule)
-  M._echo_multiline("[Diffview.nvim] " .. msg, "Directory", schedule)
+  M.echo_multiln("[Diffview.nvim] " .. msg, "Directory", schedule)
 end
 
 ---@param msg string
 ---@param schedule? boolean Schedule the echo call.
 function M.warn(msg, schedule)
-  M._echo_multiline("[Diffview.nvim] " .. msg, "WarningMsg", schedule)
+  M.echo_multiln("[Diffview.nvim] " .. msg, "WarningMsg", schedule)
 end
 
 ---@param msg string
 ---@param schedule? boolean Schedule the echo call.
 function M.err(msg, schedule)
-  M._echo_multiline("[Diffview.nvim] " .. msg, "ErrorMsg", schedule)
+  M.echo_multiln("[Diffview.nvim] " .. msg, "ErrorMsg", schedule)
 end
 
 ---Call the function `f`, ignoring most of the window and buffer related
