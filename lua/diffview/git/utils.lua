@@ -209,11 +209,8 @@ local incremental_fh_data = async.void(function(git_root, path_args, single_file
     done = done + 1
     if done == 2 then
       if namestat_job.code ~= 0 or numstat_job.code ~= 0 then
-        logger.error("[Git] File history job(s) exited with non-zero status!")
-        logger.error(string.format("Cmd: %s %s", namestat_job.command, table.concat(namestat_job.args, " ")))
-        logger.error("[stderr] " .. table.concat(namestat_job:stderr_result(), "\n"))
-        logger.error(string.format("Cmd: %s %s", numstat_job.command, table.concat(numstat_job.args, " ")))
-        logger.error("[stderr] " .. table.concat(numstat_job:stderr_result(), "\n"))
+        utils.handle_failed_job(namestat_job)
+        utils.handle_failed_job(numstat_job)
         callback(JobStatus.ERROR)
       else
         callback(JobStatus.SUCCESS)
@@ -324,7 +321,8 @@ local function process_file_history(thread, git_root, path_args, opt, callback)
     -- show' to get file statuses for merge commits. And merges do not always
     -- have changes.
     if cur.merge_hash then
-      local job = Job:new({
+      local job
+      local job_spec = {
         command = "git",
         args = {
           "show",
@@ -343,18 +341,35 @@ local function process_file_history(thread, git_root, path_args, opt, callback)
           end
           coroutine.resume(thread)
         end,
-      })
+      }
 
-      table.insert(file_history_jobs, job)
+      local max_retries = 1
       resume_lock = true
-      job:start()
-      coroutine.yield()
+
+      for i = 0, max_retries do
+        -- Git sometimes fails this job silently (exit code 0). Not sure why,
+        -- possibly because we are running multiple git opeartions on the same
+        -- repo concurrently. Retrying the job usually solves this.
+        job = Job:new(job_spec)
+        table.insert(file_history_jobs, job)
+        job:start()
+        coroutine.yield()
+        utils.handle_failed_job(job)
+
+        if #cur.namestat == 0 then
+          logger.warn("[git] 'git-show' returned nothing for merge commit!")
+          logger.log_job(job, logger.warn)
+          if i < max_retries then
+            logger.warn(("[git] Retrying %d more time(s).") :format(max_retries - i))
+          end
+        else
+          break
+        end
+      end
+
       resume_lock = false
 
       if job.code ~= 0 then
-        logger.error("[Git] Failed to get name-status for merge commit!")
-        logger.error(string.format("Cmd: %s %s", job.command, table.concat(job.args, " ")))
-        logger.error("[stderr] " .. table.concat(job:stderr_result(), "\n"))
         callback({}, JobStatus.ERROR)
         return
       end
@@ -362,6 +377,8 @@ local function process_file_history(thread, git_root, path_args, opt, callback)
       if #cur.namestat == 0 then
         -- Give up: something has been renamed. We can no longer track the
         -- history.
+        logger.warn("[git] Giving up.")
+        utils.warn("Displayed history may be incomplete. Check ':DiffviewLog' for details.", true)
         break
       end
     end
@@ -631,6 +648,7 @@ M.show = async.wrap(function(git_root, args, callback)
     ---@type Job
     on_exit = function(j)
       if j.code ~= 0 then
+        utils.handle_failed_job(j)
         callback(j:stderr_result(), nil)
       else
         callback(nil, j:result())

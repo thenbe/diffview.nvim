@@ -91,7 +91,8 @@ end
 ---@param git_root string
 ---@param left_winid integer
 ---@param right_winid integer
-function FileEntry:load_buffers(git_root, left_winid, right_winid)
+---@param callback function
+function FileEntry:load_buffers(git_root, left_winid, right_winid, callback)
   ---@type PerfTimer
   local perf = PerfTimer("[FileEntry] Buffer load")
 
@@ -140,6 +141,9 @@ function FileEntry:load_buffers(git_root, left_winid, right_winid)
         perf:lap("view updated")
         perf:time()
         logger.lvl(5).s_debug(perf)
+        if type(callback) == "function" then
+          callback()
+        end
       end
     end
   end

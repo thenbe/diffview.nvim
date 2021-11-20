@@ -187,14 +187,12 @@ function FileHistoryPanel:update_entries(callback)
       vim.schedule(function()
         c = #entries
         if ldt > timeout then
-          if DiffviewGlobal.debug_level >= 10 then
-            logger.lvl(10).debug(
-              string.format(
-                "[FH_PANEL] Rendering is slower than throttle timeout (%.3f ms). Skipping update.",
-                ldt
-              )
+          logger.lvl(10).debug(
+            string.format(
+              "[FH_PANEL] Rendering is slower than throttle timeout (%.3f ms). Skipping update.",
+              ldt
             )
-          end
+          )
           ldt = ldt - timeout
           lock = false
           return
@@ -215,7 +213,7 @@ function FileHistoryPanel:update_entries(callback)
 
         if status == JobStatus.SUCCESS then
           perf_update:time()
-          logger.s_debug(string.format(
+          logger.s_info(string.format(
             "[FileHistory] Completed update for %d entries successfully (%.3f ms).",
             #self.entries,
             perf_update.final_time

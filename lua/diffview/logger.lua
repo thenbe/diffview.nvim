@@ -6,7 +6,7 @@ local logger = log.new({
   plugin = "diffview",
   highlights = false,
   use_console = false,
-  level = DiffviewGlobal.debug_level > 0 and "debug" or "error",
+  level = DiffviewGlobal.debug_level > 0 and "debug" or "info",
 })
 
 local mock_logger = Mock()
@@ -38,6 +38,30 @@ function logger.lvl(min_level)
     return logger
   end
   return mock_logger
+end
+
+---@param job Job
+---@param log_func function
+function logger.log_job(job, log_func)
+  local stdout, stderr = job:result(), job:stderr_result()
+  local args = vim.tbl_map(function(arg)
+    -- Simple shell escape. NOTE: not valid for windows shell.
+    return ("'%s'"):format(arg:gsub("'", "\\'"))
+  end, job.args)
+
+  if type(log_func) == "string" then
+    log_func = logger[log_func]
+  end
+
+  log_func(("[job-info] Exit code: %s"):format(job.code))
+  log_func(("[cmd] %s %s"):format(job.command, table.concat(args, " ")))
+
+  if #stdout > 0 then
+    log_func("[stdout] " .. table.concat(stdout, "\n"))
+  end
+  if #stderr > 0 then
+    log_func("[stderr] " .. table.concat(stderr, "\n"))
+  end
 end
 
 return logger
