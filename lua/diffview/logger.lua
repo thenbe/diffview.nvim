@@ -46,7 +46,7 @@ function logger.log_job(job, log_func)
   local stdout, stderr = job:result(), job:stderr_result()
   local args = vim.tbl_map(function(arg)
     -- Simple shell escape. NOTE: not valid for windows shell.
-    return ("'%s'"):format(arg:gsub("'", "\\'"))
+    return ("'%s'"):format(arg:gsub("'", [['"'"']]))
   end, job.args)
 
   if type(log_func) == "string" then

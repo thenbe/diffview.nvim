@@ -148,6 +148,9 @@ function FileEntry:load_buffers(git_root, left_winid, right_winid, callback)
     end
   end
 
+  self.left_ready = self.left_bufid and api.nvim_buf_is_loaded(self.left_bufid)
+  self.right_ready = self.right_bufid and api.nvim_buf_is_loaded(self.right_bufid)
+
   if not (self.left_ready and self.right_ready) then
     utils.no_win_event_call(function()
       FileEntry.load_null_buffer(left_winid)
@@ -201,7 +204,7 @@ function FileEntry:load_buffers(git_root, left_winid, right_winid, callback)
           FileEntry._attach_buffer(split.bufid)
         end
       else
-        -- Buffer is already exists
+        -- Buffer already exists
         FileEntry._attach_buffer(split.bufid)
         on_ready()
       end

@@ -291,14 +291,14 @@ function M.handle_failed_job(job)
 
   local logger = require("diffview.logger")
   local args = vim.tbl_map(function(arg)
-    return ("'%s'"):format(arg:gsub("'", "\\'"))
+    return ("'%s'"):format(arg:gsub("'", [['"'"']]))
   end, job.args)
 
   logger.s_error(("Job exited with a non-zero exit status! Code: %s"):format(job.code))
   logger.s_error(("[cmd] %s %s"):format(job.command, table.concat(args, " ")))
 
   local stderr = job:stderr_result()
-  if #stderr == 0 then
+  if #stderr > 0 then
     logger.s_error("[stderr] " .. table.concat(stderr, "\n"))
   end
 end
