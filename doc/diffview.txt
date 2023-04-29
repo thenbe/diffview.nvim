@@ -190,6 +190,9 @@ COMMANDS                                        *diffview-commands*
             :DiffviewFileHistory --range=origin..HEAD
             :DiffviewFileHistory --range=feat/some-branch
             :'<,'>DiffviewFileHistory
+
+            " Stash:
+            :DiffviewFileHistory --reflog --merges
 <
 
     What options are available will be determined by what type of repository
